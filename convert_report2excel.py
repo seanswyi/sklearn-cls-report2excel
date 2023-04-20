@@ -313,7 +313,7 @@ def main(args: Namespace) -> None:
     report_files: str = os.listdir(args.report_dir)
     report_filepaths: list[str] = [os.path.join(args.report_dir, f) for f in report_files]
 
-    print(f"Report files:")
+    print("Report files:")
     for fp in report_filepaths:
         print(f"\t{fp}")
 
@@ -350,7 +350,16 @@ if __name__ == "__main__":
         type=str,
         help="Path to single report file."
     )
+    parser.add_argument(
+        "--save_dir",
+        default="",
+        type=str,
+        help="Directory to save Excel files."
+    )
 
     args = parser.parse_args()
+
+    if args.save_dir == "":
+        args.save_dir = args.report_dir
 
     main(args)
