@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, Namespace
 import os
+from typing import Union
 
 from openpyxl import Workbook
 from openpyxl.formatting.rule import ColorScaleRule
@@ -13,6 +14,7 @@ from openpyxl.styles import (
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 import pandas as pd
+from tqdm import tqdm
 
 
 # Formatting for header row and column.
@@ -61,10 +63,14 @@ def get_grid_coordinates(start_row: int, start_col: int, num_rows: int, num_cols
 
 def convert_report2excel(
     workbook: Workbook,
-    report: pd.DataFrame | dict[str, float],
-    sheet_name: str
+    report: Union[pd.DataFrame, dict[str, float]],
+    sheet_name: str=""
 ) -> Workbook:
-    """Function to convert classification report to formatted Excel file."""
+    """Function to convert classification report to formatted Excel file.
+
+    An openpyxl.Workbook object must first be created outside of the func and provided.
+    The func will create a formatted sheet, add it to the provided Workbook, and return it.
+    """
     if isinstance(report, dict):
         report = pd.DataFrame(report).T
         report.reset_index(inplace=True)
@@ -312,26 +318,23 @@ def convert_report2excel(
 
 
 def main(args: Namespace) -> None:
-    all_tasks_report_file: str = [
-        f for f in os.listdir(args.root_dir) if f.startswith("all_tasks")
-    ][0]
-    all_tasks_report_filepath = os.path.join(args.root_dir, all_tasks_report_file)
-
-    reports_dir: str = os.path.join(args.root_dir, args.report_dir)
-    report_files: str = os.listdir(reports_dir)
-    report_filepaths: list[str] = [os.path.join(reports_dir, f) for f in report_files]
-
-    all_files: list[str] = [all_tasks_report_filepath] + report_filepaths
+    report_files: str = os.listdir(args.report_dir)
+    report_filepaths: list[str] = [os.path.join(args.report_dir, f) for f in report_files]
 
     workbook = Workbook()
     workbook.remove(workbook.active)  # Remove default sheet.
 
-    for file in all_files:
+    pbar = tqdm(
+        iterable=report_filepaths,
+        desc="Converting classification reports to formatted Excel files",
+        total=len(report_filepaths)
+    )
+    for file in pbar:
         report = pd.read_csv(file)
         sheet_name = os.path.splitext(file.split('/')[-1])[0]
         workbook = convert_report2excel(workbook, report, sheet_name)
 
-    workbook.save("/data/shared2/zepeto_testing.xlsx")
+    workbook.save(args.report_dir)
 
 
 if __name__ == "__main__":
