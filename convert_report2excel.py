@@ -17,50 +17,6 @@ import pandas as pd
 from tqdm import tqdm
 
 
-# Formatting for header row and column.
-#   Header color is light gray here.
-HEADER_COLOR = PatternFill(
-    start_color="D9D9D9",
-    end_color="D9D9D9",
-    fill_type="solid")
-HEADER_FONT = Font(
-    name="Arial",
-    bold=True
-)
-DEFAULT_FONT = Font(
-    name="Arial",
-    bold=False
-)
-
-
-# For conditional formatting.
-#   Higher = greener.
-RED = Color(rgb="E67C73")
-WHITE = Color(rgb="FFFFFF")
-GREEN = Color(rgb="57BB8A")
-COLOR_SCALE_RULE = ColorScaleRule(
-    start_type="num",
-    start_value=0.0,
-    start_color=RED,
-    mid_type="num",
-    mid_value=0.6,
-    mid_color=WHITE,
-    end_type="num",
-    end_value=1.0,
-    end_color=GREEN,
-)
-
-
-# Floating point precision.
-FLOAT_PREC = "0.0000"
-
-
-def get_grid_coordinates(start_row: int, start_col: int, num_rows: int, num_cols: int):
-    for i in range(num_rows):
-        for j in range(num_cols):
-            yield start_row + i, start_col + j
-
-
 def convert_report2excel(
     workbook: Workbook,
     report: Union[pd.DataFrame, dict[str, float]],
@@ -71,6 +27,42 @@ def convert_report2excel(
     An openpyxl.Workbook object must first be created outside of the func and provided.
     The func will create a formatted sheet, add it to the provided Workbook, and return it.
     """
+    # Formatting for header row and column.
+    #   Header color is light gray here.
+    header_color = PatternFill(
+        start_color="D9D9D9",
+        end_color="D9D9D9",
+        fill_type="solid")
+    header_font = Font(
+        name="Arial",
+        bold=True
+    )
+    default_font = Font(
+        name="Arial",
+        bold=False
+    )
+
+    # For conditional formatting.
+    #   Higher = greener.
+    start_color = Color(rgb="E67C73") # White
+    mid_color = Color(rgb="FFFFFF") # Red
+    end_color = Color(rgb="57BB8A") # Green
+    color_scale_rule = ColorScaleRule(
+        start_type="num",
+        start_value=0.0,
+        start_color=start_color,
+        mid_type="num",
+        mid_value=0.6,
+        mid_color=mid_color,
+        end_type="num",
+        end_value=1.0,
+        end_color=end_color,
+    )
+
+
+    # Floating point precision.
+    float_prec = "0.0000"
+
     if isinstance(report, dict):
         report = pd.DataFrame(report).T
         report.reset_index(inplace=True)
@@ -277,7 +269,7 @@ def convert_report2excel(
         f"{get_column_letter(gradient_grid_start_col)}{gradient_grid_start_row}:"
         f"{get_column_letter(gradient_grid_end_col)}{gradient_grid_end_row}"
     )
-    worksheet.conditional_formatting.add(range_string=grid_range, cfRule=COLOR_SCALE_RULE)
+    worksheet.conditional_formatting.add(range_string=grid_range, cfRule=color_scale_rule)
 
     # Format fonts.
     for row in worksheet[top_left:bottom_right]:
@@ -289,16 +281,16 @@ def convert_report2excel(
                 worksheet.cell(
                     row=cell.row,
                     column=cell.column
-                ).font = HEADER_FONT
+                ).font = header_font
                 worksheet.cell(
                     row=cell.row,
                     column=cell.column
-                ).fill = HEADER_COLOR
+                ).fill = header_color
             else:
                 worksheet.cell(
                     row=cell.row,
                     column=cell.column
-                ).font = DEFAULT_FONT
+                ).font = default_font
 
     # Format floating point precision.
     top_left = "B2"
@@ -312,7 +304,7 @@ def convert_report2excel(
             worksheet.cell(
                 row=cell.row,
                 column=cell.column
-            ).number_format = FLOAT_PREC
+            ).number_format = float_prec
 
     return workbook
 
