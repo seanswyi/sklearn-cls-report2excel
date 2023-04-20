@@ -4,13 +4,7 @@ from typing import Union
 
 from openpyxl import Workbook
 from openpyxl.formatting.rule import ColorScaleRule
-from openpyxl.styles import (
-    Border,
-    Color,
-    Font,
-    PatternFill,
-    Side
-)
+from openpyxl.styles import Border, Color, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 import pandas as pd
@@ -20,7 +14,7 @@ from tqdm import tqdm
 def convert_report2excel(
     workbook: Workbook,
     report: Union[pd.DataFrame, dict[str, float]],
-    sheet_name: str=""
+    sheet_name: str = "",
 ) -> Workbook:
     """Function to convert classification report to formatted Excel file.
 
@@ -30,23 +24,16 @@ def convert_report2excel(
     # Formatting for header row and column.
     #   Header color is light gray here.
     header_color = PatternFill(
-        start_color="D9D9D9",
-        end_color="D9D9D9",
-        fill_type="solid")
-    header_font = Font(
-        name="Arial",
-        bold=True
+        start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"
     )
-    default_font = Font(
-        name="Arial",
-        bold=False
-    )
+    header_font = Font(name="Arial", bold=True)
+    default_font = Font(name="Arial", bold=False)
 
     # For conditional formatting.
     #   Higher = greener.
-    start_color = Color(rgb="E67C73") # White
-    mid_color = Color(rgb="FFFFFF") # Red
-    end_color = Color(rgb="57BB8A") # Green
+    start_color = Color(rgb="E67C73")  # White
+    mid_color = Color(rgb="FFFFFF")  # Red
+    end_color = Color(rgb="57BB8A")  # Green
     color_scale_rule = ColorScaleRule(
         start_type="num",
         start_value=0.0,
@@ -59,19 +46,28 @@ def convert_report2excel(
         end_color=end_color,
     )
 
-
     # Floating point precision.
     float_prec = "0.0000"
 
     if isinstance(report, dict):
         report = pd.DataFrame(report).T
         report.reset_index(inplace=True)
-        report.rename(columns={"index": "class"})
 
-    df_xl = dataframe_to_rows(
-                df=report,
-                index=False
-            )
+    if "index" in report.columns.values:
+        report.rename(columns={"index": "class"}, inplace=True)
+    else:
+        report.rename(columns={"Unnamed: 0": "class"}, inplace=True)
+
+    # Fix formatting issues when `accuracy` is outputted.
+    # if "accuracy" in report.columns:
+    #     support = report.loc[report["class"] == "weighted avg", "support"].iloc[0]
+    #     report.loc[report["class"] == "accuracy", "support"] = support
+
+    #     if "predicted" in report.columns:
+    #         predicted = report.loc[report["class"] == "weighted avg", "predicted"].iloc[0]
+    #         report.loc[report["class"] == "accuracy", "predicted"] = predicted
+
+    df_xl = dataframe_to_rows(df=report, index=False)
 
     worksheet = workbook.create_sheet(title=sheet_name)
 
@@ -84,101 +80,50 @@ def convert_report2excel(
     outer_border_bottom_row = report.shape[0] + 1
     outer_border_bottom_col = report.shape[1]
 
-    top_left_corner = Border(
-        top=Side(style="thin"),
-        left=Side(style="thin")
-    )
-    top_right_corner = Border(
-        top=Side(style="thin"),
-        right=Side(style="thin")
-    )
-    bottom_left_corner = Border(
-        left=Side(style="thin"),
-        bottom=Side(style="thin")
-    )
-    bottom_right_corner = Border(
-        right=Side(style="thin"),
-        bottom=Side(style="thin")
-    )
+    top_left_corner = Border(top=Side(style="thin"), left=Side(style="thin"))
+    top_right_corner = Border(top=Side(style="thin"), right=Side(style="thin"))
+    bottom_left_corner = Border(left=Side(style="thin"), bottom=Side(style="thin"))
+    bottom_right_corner = Border(right=Side(style="thin"), bottom=Side(style="thin"))
     top = Border(top=Side(style="thin"))
     bottom = Border(bottom=Side(style="thin"))
     left = Border(left=Side(style="thin"))
     right = Border(right=Side(style="thin"))
 
-    top_left = (
-        f"{get_column_letter(outer_border_top_col)}"
-        f"{outer_border_top_row}"
-    )
+    top_left = f"{get_column_letter(outer_border_top_col)}" f"{outer_border_top_row}"
     bottom_right = (
-        f"{get_column_letter(outer_border_bottom_col)}"
-        f"{outer_border_bottom_row}"
+        f"{get_column_letter(outer_border_bottom_col)}" f"{outer_border_bottom_row}"
     )
     for row in worksheet[top_left:bottom_right]:
         for cell in row:
-            if (
-                cell.row == 1 and
-                cell.column == 1
-            ):
+            if cell.row == 1 and cell.column == 1:
                 worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
+                    row=cell.row, column=cell.column
                 ).border = top_left_corner
-            elif (
-                cell.row == 1 and
-                cell.column == report.shape[0]
-            ):
+            elif cell.row == 1 and cell.column == report.shape[0]:
                 worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
+                    row=cell.row, column=cell.column
                 ).border = top_right_corner
-            elif (
-                cell.row == report.shape[0] + 1 and
-                cell.column == 1
-            ):
+            elif cell.row == report.shape[0] + 1 and cell.column == 1:
                 worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
+                    row=cell.row, column=cell.column
                 ).border = bottom_left_corner
-            elif (
-                cell.row == report.shape[0] + 1 and
-                cell.column == report.shape[1]
-            ):
+            elif cell.row == report.shape[0] + 1 and cell.column == report.shape[1]:
                 worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
+                    row=cell.row, column=cell.column
                 ).border = bottom_right_corner
+            elif cell.row in range(1, report.shape[0] + 1) and cell.column == 1:
+                worksheet.cell(row=cell.row, column=cell.column).border = left
             elif (
-                cell.row in range(1, report.shape[0] + 1) and
-                cell.column == 1
+                cell.row in range(1, report.shape[0] + 1)
+                and cell.column == report.shape[1]
             ):
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).border = left
-            elif (
-                cell.row in range(1, report.shape[0] + 1) and
-                cell.column == report.shape[1]
+                worksheet.cell(row=cell.row, column=cell.column).border = right
+            elif cell.row == 1 and cell.column in range(1, report.shape[1] + 1):
+                worksheet.cell(row=cell.row, column=cell.column).border = top
+            elif cell.row == report.shape[0] + 1 and cell.column in range(
+                1, report.shape[1] + 1
             ):
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).border = right
-            elif (
-                cell.row == 1 and
-                cell.column in range(1, report.shape[1] + 1)
-            ):
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).border = top
-            elif (
-                cell.row == report.shape[0] + 1 and
-                cell.column in range(1, report.shape[1] + 1)
-            ):
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).border = bottom
+                worksheet.cell(row=cell.row, column=cell.column).border = bottom
             else:
                 continue
 
@@ -196,7 +141,7 @@ def convert_report2excel(
             left=existing_border.left,
             right=existing_border.right,
             top=existing_border.top,
-            bottom=Side(style="thin")
+            bottom=Side(style="thin"),
         )
         worksheet.cell(row=cell.row, column=cell.column).border = new_border
 
@@ -216,7 +161,7 @@ def convert_report2excel(
                 left=Side(style="thin"),
                 right=existing_border.right,
                 top=existing_border.top,
-                bottom=existing_border.bottom
+                bottom=existing_border.bottom,
             )
             worksheet.cell(row=cell.row, column=cell.column).border = new_border
 
@@ -230,7 +175,7 @@ def convert_report2excel(
                 left=existing_border.left,
                 right=Side(style="thin"),
                 top=existing_border.top,
-                bottom=existing_border.bottom
+                bottom=existing_border.bottom,
             )
             worksheet.cell(row=cell.row, column=cell.column).border = new_border
 
@@ -253,7 +198,7 @@ def convert_report2excel(
                     left=existing_border.left,
                     right=existing_border.right,
                     top=Side(style="thick"),
-                    bottom=existing_border.bottom
+                    bottom=existing_border.bottom,
                 )
                 worksheet.cell(row=cell.row, column=cell.column).border = new_border
     except IndexError:
@@ -269,49 +214,56 @@ def convert_report2excel(
         f"{get_column_letter(gradient_grid_start_col)}{gradient_grid_start_row}:"
         f"{get_column_letter(gradient_grid_end_col)}{gradient_grid_end_row}"
     )
-    worksheet.conditional_formatting.add(range_string=grid_range, cfRule=color_scale_rule)
+    worksheet.conditional_formatting.add(
+        range_string=grid_range, cfRule=color_scale_rule
+    )
 
     # Format fonts.
     for row in worksheet[top_left:bottom_right]:
         for cell in row:
-            if (
-                cell.row == 1 or
-                cell.column == 1
-            ):
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).font = header_font
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).fill = header_color
+            if cell.row == 1 or cell.column == 1:
+                worksheet.cell(row=cell.row, column=cell.column).font = header_font
+                worksheet.cell(row=cell.row, column=cell.column).fill = header_color
             else:
-                worksheet.cell(
-                    row=cell.row,
-                    column=cell.column
-                ).font = default_font
+                worksheet.cell(row=cell.row, column=cell.column).font = default_font
 
     # Format floating point precision.
     top_left = "B2"
-    bottom_right = (
-        f"{get_column_letter(support_col - 1)}"
-        f"{report.shape[0] + 1}"
-    )
+    bottom_right = f"{get_column_letter(support_col - 1)}" f"{report.shape[0] + 1}"
 
     for row in worksheet[top_left:bottom_right]:
         for cell in row:
-            worksheet.cell(
-                row=cell.row,
-                column=cell.column
-            ).number_format = float_prec
+            worksheet.cell(row=cell.row, column=cell.column).number_format = float_prec
+
+    # Fix formatting issue when `accuracy` is outputted.
+    if "accuracy" in report["class"].values:
+        precision_col = report.columns.get_loc("precision") + 1
+        worksheet.cell(
+            row=avg_row,
+            column=precision_col,
+        ).value = ""
+
+        recall_col = report.columns.get_loc("recall") + 1
+        worksheet.cell(row=avg_row, column=recall_col).value = ""
+
+        support_value = worksheet.cell(row=avg_row + 1, column=support_col).value
+
+        worksheet.cell(row=avg_row, column=support_col).value = support_value
+
+        if "predicted" in report.columns:
+            worksheet.cell(row=avg_row, column=support_col + 1).value = support_value
 
     return workbook
 
 
 def main(args: Namespace) -> None:
-    report_files: str = os.listdir(args.report_dir)
-    report_filepaths: list[str] = [os.path.join(args.report_dir, f) for f in report_files]
+    if args.report_filename:
+        report_filepaths = [args.report_filename]
+    else:
+        report_files: str = os.listdir(args.report_dir)
+        report_filepaths: list[str] = [
+            os.path.join(args.report_dir, f) for f in report_files
+        ]
 
     print("Report files:")
     for fp in report_filepaths:
@@ -323,16 +275,24 @@ def main(args: Namespace) -> None:
     pbar = tqdm(
         iterable=report_filepaths,
         desc="Converting classification reports to formatted Excel files",
-        total=len(report_filepaths)
+        total=len(report_filepaths),
     )
     for file in pbar:
         report = pd.read_csv(file)
-        sheet_name = os.path.splitext(file.split('/')[-1])[0]
+        sheet_name = os.path.splitext(file.split("/")[-1])[0]
         workbook = convert_report2excel(workbook, report, sheet_name)
 
     print(f"New Workbook has a total of {len(workbook.worksheets)} Worksheets.")
-    print(f"Saving in {args.report_dir}")
-    workbook.save(args.report_dir)
+
+    if args.report_filename:
+        save_filename = f"{os.path.splitext(args.report_filename)[0]}_excel.xlsx"
+    else:
+        save_filename = "reports_formatted.xlsx"
+
+    save_filepath = os.path.join(args.save_dir, save_filename)
+
+    print(f"Saving in {save_filepath}")
+    workbook.save(save_filepath)
 
 
 if __name__ == "__main__":
@@ -345,21 +305,18 @@ if __name__ == "__main__":
         help="Directory where all of the individual reports are.",
     )
     parser.add_argument(
-        "--report_filename",
-        default="",
-        type=str,
-        help="Path to single report file."
+        "--report_filename", default="", type=str, help="Path to single report file."
     )
     parser.add_argument(
-        "--save_dir",
-        default="",
-        type=str,
-        help="Directory to save Excel files."
+        "--save_dir", default="", type=str, help="Directory to save Excel files."
     )
 
     args = parser.parse_args()
 
     if args.save_dir == "":
-        args.save_dir = args.report_dir
+        if args.report_filename:
+            args.save_dir = os.path.dirname(args.report_filename)
+        else:
+            args.save_dir = args.report_dir
 
     main(args)
