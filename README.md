@@ -45,8 +45,16 @@ workbook.save("animal_report.xlsx")
 
 ### Using `convert_report2excel` as a Script
 
-If you don't specify the `--save_dir` argument, the results will be saved automatically to `--report_dir`.
+If you don't specify the `--save_dir` argument, the results will be saved automatically to `--report_dir` or `--report_filename`'s parent directory.
 
 ```
 python convert_report2excel.py --report_dir $PATH_TO_REPORTS
 ```
+
+---
+
+The final results should look as follows:
+
+<p align="center">
+  <img src="https://github.com/seanswyi/sklearn-cls-report2excel/blob/main/images/sklearn-report2excel_example.png?raw=true" alt="Results"/>
+</p>
