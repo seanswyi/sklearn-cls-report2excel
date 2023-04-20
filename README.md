@@ -12,7 +12,7 @@ Some things to keep in mind:
   2. Instantiate a `openpyxl.Workbook` object first.
   3. If you don't want the default sheet, delete it.
 
-```
+```Python
 import numpy as np
 from openpyxl import Workbook
 import pandas as pd
