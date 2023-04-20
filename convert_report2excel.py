@@ -58,15 +58,6 @@ def convert_report2excel(
     else:
         report.rename(columns={"Unnamed: 0": "class"}, inplace=True)
 
-    # Fix formatting issues when `accuracy` is outputted.
-    # if "accuracy" in report.columns:
-    #     support = report.loc[report["class"] == "weighted avg", "support"].iloc[0]
-    #     report.loc[report["class"] == "accuracy", "support"] = support
-
-    #     if "predicted" in report.columns:
-    #         predicted = report.loc[report["class"] == "weighted avg", "predicted"].iloc[0]
-    #         report.loc[report["class"] == "accuracy", "predicted"] = predicted
-
     df_xl = dataframe_to_rows(df=report, index=False)
 
     worksheet = workbook.create_sheet(title=sheet_name)
