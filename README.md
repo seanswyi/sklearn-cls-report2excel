@@ -49,6 +49,7 @@ If you don't specify the `--save_dir` argument, the results will be saved automa
 
 ```
 python convert_report2excel.py --report_dir $PATH_TO_REPORTS
+python convert_report2excel.py --report_filename $PATH_TO_SINGLE_REPORT
 ```
 
 ---
