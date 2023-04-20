@@ -313,6 +313,10 @@ def main(args: Namespace) -> None:
     report_files: str = os.listdir(args.report_dir)
     report_filepaths: list[str] = [os.path.join(args.report_dir, f) for f in report_files]
 
+    print(f"Report files:")
+    for fp in report_filepaths:
+        print(f"\t{fp}")
+
     workbook = Workbook()
     workbook.remove(workbook.active)  # Remove default sheet.
 
@@ -326,6 +330,8 @@ def main(args: Namespace) -> None:
         sheet_name = os.path.splitext(file.split('/')[-1])[0]
         workbook = convert_report2excel(workbook, report, sheet_name)
 
+    print(f"New Workbook has a total of {len(workbook.worksheets)} Worksheets.")
+    print(f"Saving in {args.report_dir}")
     workbook.save(args.report_dir)
 
 
