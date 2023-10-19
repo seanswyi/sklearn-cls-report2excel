@@ -1,13 +1,13 @@
-from argparse import ArgumentParser, Namespace
 import os
+from argparse import ArgumentParser, Namespace
 from typing import Union
 
+import pandas as pd
 from openpyxl import Workbook
 from openpyxl.formatting.rule import ColorScaleRule
 from openpyxl.styles import Border, Color, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
-import pandas as pd
 from tqdm import tqdm
 
 
